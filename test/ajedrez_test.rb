@@ -5,46 +5,37 @@ Minitest::Reporters.use!(Minitest::Reporters::SpecReporter.new)
 
 class TestAjedrez < Minitest::Test
   def setup
-    $historial = Historial.new
-    $captura_al_paso = 0
-    $jugador_actual = Blanca
-
     $tablero = Tablero.new
-    for i in 1..8
-      for j in 1..8
-        $tablero[i][j] = nil
-      end
-    end   
   end
 
   def test_mate_del_loco
-    $tablero.colocar_piezas.mostrar
+    $tablero.iniciar
 
-    mover(F2, F3)
-    mover(E7, E5)
-    mover(G2, G4)
-    mover(D8, H4)
-    assert jugador_en_jaque_mate?
-    historial
+    $tablero.mover(6, 2, 6, 3)
+    $tablero.mover(5, 7, 5, 5)
+    $tablero.mover(7, 2, 7, 4)
+    $tablero.mover(4, 8, 8, 4)
+    assert $tablero.jugador_en_jaque_mate?
+    $tablero.historial.mostrar
   end
 
   # Defensa Patrov
   def test_captura_al_paso
-    $tablero.colocar_piezas.mostrar
+    $tablero.iniciar
 
-    mover(E2, E4)
-    mover(E7, E5)
-    mover(G1, F3)
-    mover(G8, F6)
-    mover(D2, D4)
-    mover(E5, D4)
-    mover(E4, E5)
-    mover(F6, E4)
-    mover(D1, D4)
-    mover(D7, D5)
+    $tablero.mover(5, 2, 5, 4)
+    $tablero.mover(5, 7, 5, 5)
+    $tablero.mover(7, 1, 6, 3)
+    $tablero.mover(7, 8, 6, 6)
+    $tablero.mover(4, 2, 4, 4)
+    $tablero.mover(5, 5, 4, 4)
+    $tablero.mover(5, 4, 5, 5)
+    $tablero.mover(6, 6, 5, 4)
+    $tablero.mover(4, 1, 4, 4)
+    $tablero.mover(4, 7, 4, 5)
 
-    assert_equal(mover(E5, D6), "exd6e.p.")
-    historial
+    assert_equal $tablero.mover(5, 5, 4, 6), "exd6e.p."
+    $tablero.historial.mostrar
   end
 
   def test_movimiento_ambiguo_1
@@ -55,9 +46,9 @@ class TestAjedrez < Minitest::Test
     Dama.new(Blanca, 8, 8)
     PeonNegro.new(4, 4)
 
-    tablero
-    assert_equal(mover(A4, D4), "Daxd4")
-    historial
+    $tablero.mostrar
+    assert_equal $tablero.mover(1, 4, 4, 4), "Daxd4"
+    $tablero.historial.mostrar
   end
 
   def test_movimiento_ambiguo_2
@@ -67,9 +58,9 @@ class TestAjedrez < Minitest::Test
     Dama.new(Blanca, 4, 8)
     PeonNegro.new(4, 4)
 
-    tablero
-    assert_equal(mover(D1, D4), "D1xd4")
-    historial
+    $tablero.mostrar
+    assert_equal $tablero.mover(4, 1, 4, 4), "D1xd4"
+    $tablero.historial.mostrar
   end
 
   def test_movimiento_ambiguo_3
@@ -80,9 +71,9 @@ class TestAjedrez < Minitest::Test
     Dama.new(Blanca, 8, 8)
     PeonNegro.new(4, 4)
 
-    tablero
-    assert_equal(mover(D1, D4), "D1xd4")
-    historial
+    $tablero.mostrar
+    assert_equal $tablero.mover(4, 1, 4, 4), "D1xd4"
+    $tablero.historial.mostrar
   end
 
   def test_movimiento_ambiguo_4
@@ -94,9 +85,9 @@ class TestAjedrez < Minitest::Test
     Caballo.new(Blanca, 5, 6)
     PeonNegro.new(4, 4)
 
-    tablero
-    assert_equal(mover(C2, D4), "Cc2xd4")
-    historial
+    $tablero.mostrar
+    assert_equal $tablero.mover(3, 2, 4, 4), "Cc2xd4"
+    $tablero.historial.mostrar
   end
 
   def test_enrroque
@@ -111,20 +102,20 @@ class TestAjedrez < Minitest::Test
     Rey.new(Negra, 5, 8)
     Torre.new(Negra, 8, 8)
 
-    tablero
-    assert_equal(mover(E1, C1), nil)      # No puede enrrocar ya que hay una pieza en el medio del camino de la torre.
-    assert_equal(mover(E1, G1), nil)      # No puede enrrocar ya que hay una pieza en la posicion de destino.
-    mover(G1, H3)
-    assert_equal(mover(E8, C8), nil)      # No puede enrrocar ya que hay una pieza en el medio de su camino.
-    assert_equal(mover(E8, G8), nil)      # No puede enrrocar ya que la reina blanca amenaza F8.
-    mover(H8, H7)
-    mover(F3, E3)
-    assert_equal(mover(E8, G8), nil)      # No puede enrrocar ya que esta en jaque.
-    mover(D8, E7)
-    assert_equal(mover(E1, G1), "0+0")    # Enrroque corto.
-    mover(H7, H8)
-    mover(B1, A3)
-    assert_equal(mover(E8, G8), nil)      # No puede enrrocar ya que la torre se ha movido.
-    assert_equal(mover(E8, C8), "0+0+0")  # Enrroque largo.
+    $tablero.historial.mostrar
+    assert_nil $tablero.mover(5, 1, 3, 1)             # No puede enrrocar ya que hay una pieza en el medio del camino de la torre.
+    assert_nil $tablero.mover(5, 1, 7, 1)             # No puede enrrocar ya que hay una pieza en la posicion de destino.
+    $tablero.mover(7, 1, 8, 3)
+    assert_nil $tablero.mover(5, 8, 3, 8)             # No puede enrrocar ya que hay una pieza en el medio de su camino.
+    assert_nil $tablero.mover(5, 8, 7, 8)             # No puede enrrocar ya que la reina blanca amenaza F8.
+    $tablero.mover(8, 8, 8, 7)
+    $tablero.mover(6, 3, 5, 3)
+    assert_nil $tablero.mover(5, 8, 7, 8)             # No puede enrrocar ya que esta en jaque.
+    $tablero.mover(4, 8, 5, 7)
+    assert_equal $tablero.mover(5, 1, 7, 1), "0+0"    # Enrroque corto.
+    $tablero.mover(8, 7, 8, 8)
+    $tablero.mover(2, 1, 1, 3)
+    assert_nil $tablero.mover(5, 8, 7, 8)             # No puede enrrocar ya que la torre se ha movido.
+    assert_equal $tablero.mover(5, 8, 3, 8), "0+0+0"  # Enrroque largo.
   end
 end
