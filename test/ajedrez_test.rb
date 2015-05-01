@@ -39,11 +39,11 @@ class TestAjedrez < Minitest::Test
   end
 
   def test_movimiento_ambiguo_1
-    Rey.new(Blanca, 2, 1)
-    Rey.new(Negra, 2, 7)
-    Dama.new(Blanca, 1, 4)
-    Dama.new(Blanca, 4, 8)
-    Dama.new(Blanca, 8, 8)
+    Rey.new(BLANCAS, 2, 1)
+    Rey.new(NEGRAS, 2, 7)
+    Dama.new(BLANCAS, 1, 4)
+    Dama.new(BLANCAS, 4, 8)
+    Dama.new(BLANCAS, 8, 8)
     PeonNegro.new(4, 4)
 
     $tablero.mostrar
@@ -52,10 +52,10 @@ class TestAjedrez < Minitest::Test
   end
 
   def test_movimiento_ambiguo_2
-    Rey.new(Blanca, 2, 1)
-    Rey.new(Negra, 2, 7)
-    Dama.new(Blanca, 4, 1)
-    Dama.new(Blanca, 4, 8)
+    Rey.new(BLANCAS, 2, 1)
+    Rey.new(NEGRAS, 2, 7)
+    Dama.new(BLANCAS, 4, 1)
+    Dama.new(BLANCAS, 4, 8)
     PeonNegro.new(4, 4)
 
     $tablero.mostrar
@@ -64,11 +64,11 @@ class TestAjedrez < Minitest::Test
   end
 
   def test_movimiento_ambiguo_3
-    Rey.new(Blanca, 2, 1)
-    Rey.new(Negra, 2, 7)
-    Dama.new(Blanca, 4, 1)
-    Dama.new(Blanca, 4, 8)
-    Dama.new(Blanca, 8, 8)
+    Rey.new(BLANCAS, 2, 1)
+    Rey.new(NEGRAS, 2, 7)
+    Dama.new(BLANCAS, 4, 1)
+    Dama.new(BLANCAS, 4, 8)
+    Dama.new(BLANCAS, 8, 8)
     PeonNegro.new(4, 4)
 
     $tablero.mostrar
@@ -77,12 +77,12 @@ class TestAjedrez < Minitest::Test
   end
 
   def test_movimiento_ambiguo_4
-    Rey.new(Blanca, 2, 1)
-    Rey.new(Negra, 2, 7)
-    Caballo.new(Blanca, 3, 2)
-    Caballo.new(Blanca, 3, 6)
-    Caballo.new(Blanca, 5, 2)
-    Caballo.new(Blanca, 5, 6)
+    Rey.new(BLANCAS, 2, 1)
+    Rey.new(NEGRAS, 2, 7)
+    Caballo.new(BLANCAS, 3, 2)
+    Caballo.new(BLANCAS, 3, 6)
+    Caballo.new(BLANCAS, 5, 2)
+    Caballo.new(BLANCAS, 5, 6)
     PeonNegro.new(4, 4)
 
     $tablero.mostrar
@@ -91,16 +91,16 @@ class TestAjedrez < Minitest::Test
   end
 
   def test_enrroque
-    Torre.new(Blanca, 1, 1)
-    Caballo.new(Blanca, 2, 1)
-    Dama.new(Blanca, 6, 3)
-    Rey.new(Blanca, 5, 1)
-    Caballo.new(Blanca, 7, 1)
-    Torre.new(Blanca, 8, 1)
-    Torre.new(Negra, 1, 8)
-    Dama.new(Negra, 4, 8)
-    Rey.new(Negra, 5, 8)
-    Torre.new(Negra, 8, 8)
+    Torre.new(BLANCAS, 1, 1)
+    Caballo.new(BLANCAS, 2, 1)
+    Dama.new(BLANCAS, 6, 3)
+    Rey.new(BLANCAS, 5, 1)
+    Caballo.new(BLANCAS, 7, 1)
+    Torre.new(BLANCAS, 8, 1)
+    Torre.new(NEGRAS, 1, 8)
+    Dama.new(NEGRAS, 4, 8)
+    Rey.new(NEGRAS, 5, 8)
+    Torre.new(NEGRAS, 8, 8)
 
     $tablero.historial.mostrar
     assert_nil $tablero.mover(5, 1, 3, 1)             # No puede enrrocar ya que hay una pieza en el medio del camino de la torre.
