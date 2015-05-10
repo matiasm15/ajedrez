@@ -15,7 +15,7 @@ class TestAjedrez < Minitest::Test
     $tablero.mover(5, 7, 5, 5)
     $tablero.mover(7, 2, 7, 4)
     $tablero.mover(4, 8, 8, 4)
-    assert $tablero.jugador_en_jaque_mate?
+    assert $tablero.jaque_mate?
     $tablero.historial.mostrar
   end
 

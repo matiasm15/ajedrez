@@ -1,3 +1,48 @@
+# Modulo de las piezas que realizan sus movimientos de forma horizontal, vertical o diagonal.
+module Movil
+  def camino_libre?(pos_inicial, pos_final, &block)
+    (([pos_inicial, pos_final].min.succ)..([pos_inicial, pos_final].max.pred)).all? do |i|
+      block.call(i)
+    end
+  end
+end
+
+module MovilLineal
+  include Movil
+
+  def puede_desplazarse?(columna, fila)
+    (@fila == fila and camino_horizontal_libre?(columna)) or (@columna == columna and camino_vertical_libre?(fila))
+  end
+
+  def camino_horizontal_libre?(columna)
+    camino_libre?(columna, @columna) { |i| $tablero[i][@fila].nil? }
+  end
+
+  def camino_vertical_libre?(fila)
+    camino_libre?(fila, @fila) { |i| $tablero[@columna][i].nil? }
+  end
+end
+
+module MovilDiagonal
+  include Movil
+
+  def puede_desplazarse?(columna, fila)
+    (@fila - fila).abs == (@columna - columna).abs and camino_diagonal_libre?(columna, fila)
+  end
+
+  def camino_diagonal_libre?(columna, fila)
+    camino_libre?(columna, @columna) do |i|
+      j = if (@columna > columna and @fila < fila) or (@columna < columna and @fila > fila)
+            [fila, @fila].max + [columna, @columna].min - i
+          else
+            [fila, @fila].min - [columna, @columna].min + i
+          end
+
+      $tablero[i][j].nil?
+    end
+  end
+end
+
 class Pieza
   attr_reader :color, :columna, :fila
 
@@ -21,17 +66,17 @@ class Pieza
     (@color == BLANCAS) ? inicial.white_on_red : inicial.black_on_red
   end
 
-  def notacion_jugada(columna, fila)
-    posibles_ambiguedades = $tablero.piezas_que_pueden_moverse_a(columna, fila).select do |pieza|
+  def notacion(columna, fila)
+    ambiguedades = $tablero.movibles_a(columna, fila).select do |pieza|
       (@columna != pieza.columna or @fila != pieza.fila) and @color == pieza.color and self.class == pieza.class
     end
 
     notacion = inicial
-    if posibles_ambiguedades.any? { |pieza| @fila == pieza.fila } and posibles_ambiguedades.any? { |pieza| @columna == pieza.columna }
+    if ambiguedades.any? { |pieza| @fila == pieza.fila } and ambiguedades.any? { |pieza| @columna == pieza.columna }
       notacion << "#{@columna.to_lttr}#{@fila}"
-    elsif posibles_ambiguedades.any? { |pieza| @columna == pieza.columna }
+    elsif ambiguedades.any? { |pieza| @columna == pieza.columna }
       notacion << "#{@fila}"
-    elsif posibles_ambiguedades.any?
+    elsif !ambiguedades.empty?
       notacion << "#{@columna.to_lttr}"
     end
 
@@ -64,81 +109,30 @@ class Pieza
     jugadas_posibles
   end
 
-  def simular(columna, fila, &block)
-    columna_aux = @columna
-    fila_aux = @fila
-    se_movio_aux = @se_movio
+  # Clono el tablero para simular el movimiento y comprobar si el jugador estara en jaque.
+  def jaque?(columna = @columna, fila = @fila)
     tablero_original = $tablero
     $tablero = $tablero.deep_clone
-    $tablero.en_pruebas = true
-    mover(columna, fila)
-
-    block.call
+    $tablero.test = true
+    $tablero[@columna][@fila].mover(columna, fila).cumple_condicion_para_jaque?
   ensure
     $tablero = tablero_original
-    @columna = columna_aux
-    @fila = fila_aux
-    @se_movio = se_movio_aux
-  end
-
-  def en_jaque?(columna = @columna, fila = @fila)
-    simular(columna, fila) { cumple_condicion_para_jaque? }
   end
 
   def cumple_condicion_para_jaque?
-    $tablero.jugador_en_jaque?(@color)
-  end
-
-  def puede_desplazarse_linealmente?(columna, fila)
-    (@fila == fila and camino_horizontal_libre?(columna)) or (@columna == columna and camino_vertical_libre?(fila))
-  end
-
-  def camino_horizontal_libre?(columna)
-    if (@columna - columna).abs > 1
-      (([columna, @columna].min + 1)..([columna, @columna].max - 1)).each do |i|
-        return false unless $tablero[i][@fila].nil?
-      end
-    end
-
-    return true
-  end
-
-  def camino_vertical_libre?(fila)
-    if (@fila - fila).abs > 1
-      (([fila, @fila].min + 1)..([fila, @fila].max - 1)).each do |i|
-        return false unless $tablero[@columna][i].nil?
-      end
-    end
-
-    return true
-  end
-
-  def puede_desplazarse_diagonalmente?(columna, fila)
-    (@fila - fila).abs == (@columna - columna).abs and camino_diagonal_libre?(columna, fila)
-  end
-
-  def camino_diagonal_libre?(columna, fila)
-    if (@columna - columna).abs > 1
-      (([columna, @columna].min + 1)..([columna, @columna].max - 1)).each do |i|
-        j = if (@columna > columna and @fila < fila) or (@columna < columna and @fila > fila)
-              [fila, @fila].max + [columna, @columna].min - i
-            else
-              [fila, @fila].min - [columna, @columna].min + i
-            end
-
-        return false unless $tablero[i][j].nil?
-      end
-    end
-
-    return true
+    $tablero.jaque?(@color)
   end
 
   def puede_moverse?(columna, fila)
-    ($tablero[columna][fila].nil? or $tablero[columna][fila].color != @color) and puede_desplazarse?(columna, fila) and !en_jaque?(columna, fila)
+    $tablero[columna][fila].nil? or $tablero[columna][fila].color != @color and puede_desplazarse?(columna, fila) and !jaque?(columna, fila)
   end
 
   def puede_atacar?(columna, fila)
     puede_desplazarse?(columna, fila)
+  end
+
+  def puede_enrocar?(_rey = nil)
+    false
   end
 
   def rey?(_color = @color)
@@ -151,7 +145,7 @@ class Pieza
 end
 
 class Rey < Pieza
-  def notacion_jugada(columna, fila)
+  def notacion(columna, fila)
     if puede_enrocar_corto?(columna, fila)
       "0+0"
     elsif puede_enrocar_largo?(columna, fila)
@@ -162,7 +156,7 @@ class Rey < Pieza
   end
 
   def mover(columna, fila)
-    unless $tablero.en_pruebas?  # Para evitar un ciclo infinito.
+    unless $tablero.test?  # Para evitar un ciclo infinito.
       if puede_enrocar_largo?(columna, fila)
         $tablero[1][fila].mover(4, fila)
       elsif puede_enrocar_corto?(columna, fila)
@@ -178,13 +172,13 @@ class Rey < Pieza
   end
 
   def puede_enrocar_largo?(columna, fila)
-    !se_movio? and @fila == fila and !en_jaque? and columna == 3 and !$tablero[1][fila].nil? and
-      $tablero[1][fila].torre?(@color) and !$tablero[1][fila].se_movio? and camino_horizontal_libre?(1) and !en_jaque?(4, fila)
+    fila == @fila and columna == 3 and !se_movio? and !jaque? and !jaque?(4, fila) and
+      !$tablero[1][fila].nil? and $tablero[1][fila].puede_enrocar?(self)
   end
 
   def puede_enrocar_corto?(columna, fila)
-    !se_movio? and @fila == fila and !en_jaque? and columna == 7 and !$tablero[8][fila].nil? and
-      $tablero[8][fila].torre?(@color) and !$tablero[8][fila].se_movio? and camino_horizontal_libre?(8) and !en_jaque?(6, fila)
+    fila == @fila and columna == 7 and !se_movio? and !jaque? and !jaque?(6, fila) and
+      !$tablero[8][fila].nil? and $tablero[8][fila].puede_enrocar?(self)
   end
 
   def cumple_condicion_para_jaque?
@@ -205,18 +199,26 @@ class Rey < Pieza
 end
 
 class Dama < Pieza
+  include MovilLineal
+  alias_method :puede_desplazarse_linealmente?, :puede_desplazarse?
+
+  include MovilDiagonal
+  alias_method :puede_desplazarse_diagonalmente?, :puede_desplazarse?
+
   def puede_desplazarse?(columna, fila)
     puede_desplazarse_linealmente?(columna, fila) or puede_desplazarse_diagonalmente?(columna, fila)
   end
 end
 
 class Torre < Pieza
-  def puede_desplazarse?(columna, fila)
-    puede_desplazarse_linealmente?(columna, fila)
-  end
+  include MovilLineal
 
   def torre?(color = @color)
     color == @color
+  end
+
+  def puede_enrocar?(rey)
+    rey.color == @color and !se_movio? and camino_horizontal_libre?(rey.columna)
   end
 end
 
@@ -227,13 +229,11 @@ class Caballo < Pieza
 end
 
 class Alfil < Pieza
-  def puede_desplazarse?(columna, fila)
-    puede_desplazarse_diagonalmente?(columna, fila)
-  end
+  include MovilDiagonal
 end
 
 class Peon < Pieza
-  def notacion_jugada(columna, fila)
+  def notacion(columna, fila)
     if puede_atacar?(columna, fila)
       "#{@columna.to_lttr}x#{columna.to_lttr}#{fila}"
     elsif puede_capturar_al_paso?(columna, fila)
@@ -244,9 +244,17 @@ class Peon < Pieza
   end
 
   def mover(columna, fila)
+    if @fila == fila_inicial and fila == fila_doble_avance
+      $tablero.captura_al_paso = columna
+    else
+      $tablero[columna][@fila] = nil if puede_capturar_al_paso?(columna, fila)
+      $tablero.captura_al_paso = 0
+    end
+
     $tablero[@columna][@fila] = nil
     @columna = columna
     @fila = fila
+    $tablero[columna][fila] = (!$tablero.test? and @fila == fila_final) ? coronar : self
   end
 
   def coronar
@@ -267,23 +275,36 @@ class Peon < Pieza
       end
     end
   ensure
-    $tablero.notacion_jugada << "#{eleccion}="
+    $tablero.notacion << "#{eleccion}="
   end
 
   def puede_moverse?(columna, fila)
-    (puede_desplazarse?(columna, fila) or puede_atacar?(columna, fila) or puede_capturar_al_paso?(columna, fila)) and !en_jaque?(columna, fila)
+    puede_desplazarse?(columna, fila) or puede_atacar?(columna, fila) or puede_capturar_al_paso?(columna, fila) and !jaque?(columna, fila)
   end
 
   def puede_desplazarse?(columna, fila)
-    $tablero[columna][fila].nil? and @columna == columna
+    $tablero[columna][fila].nil? and @columna == columna and
+      (fila_inicial == @fila and fila_doble_avance == fila and $tablero[columna][fila_siguiente].nil? or fila_siguiente == fila)
   end
 
   def puede_atacar?(columna, fila)
-    !$tablero[columna][fila].nil? and $tablero[columna][fila].color != @color and (@columna - columna).abs == 1
+    !$tablero[columna][fila].nil? and $tablero[columna][fila].color != @color and (@columna - columna).abs == 1 and fila_siguiente == fila
   end
 
-  def puede_capturar_al_paso?(columna, _fila)
-    columna == $tablero.captura_al_paso and (@columna - columna).abs == 1
+  def puede_capturar_al_paso?(columna, fila)
+    $tablero.captura_al_paso == columna and (@columna - columna).abs == 1 and fila_avanzada(fila_inicial, 3) == @fila and fila_siguiente == fila
+  end
+
+  def fila_avanzada(fila = @fila, posiciones)
+    posiciones.zero? ? fila : fila_avanzada(fila_siguiente(fila), posiciones.pred)
+  end
+
+  def fila_doble_avance
+    fila_avanzada(fila_inicial, 2)
+  end
+
+  def fila_final
+    fila_avanzada(fila_inicial, 6)
   end
 end
 
@@ -292,32 +313,12 @@ class PeonBlanco < Peon
     super(BLANCAS, columna, fila)
   end
 
-  def mover(columna, fila)
-    if @fila == 2 and fila == 4
-      $tablero.captura_al_paso = columna
-    else
-      if puede_capturar_al_paso?(columna, fila)
-        $tablero[columna][fila - 1] = nil
-      end
-
-      $tablero.captura_al_paso = 0
-    end
-
-    super
-
-    $tablero[columna][fila] = (!$tablero.en_pruebas? and @fila == 8) ? coronar : self
+  def fila_siguiente(fila = @fila)
+    fila.succ
   end
 
-  def puede_desplazarse?(columna, fila)
-    super and ((@fila + 1) == fila or (@fila == 2 and fila == 4 and $tablero[columna][3].nil?))
-  end
-
-  def puede_atacar?(columna, fila)
-    super and (@fila + 1) == fila
-  end
-
-  def puede_capturar_al_paso?(columna, fila)
-    super and @fila == 5 and fila == 6
+  def fila_inicial
+    2
   end
 end
 
@@ -326,31 +327,11 @@ class PeonNegro < Peon
     super(NEGRAS, columna, fila)
   end
 
-  def mover(columna, fila)
-    if @fila == 7 and fila == 5
-      $tablero.captura_al_paso = columna
-    else
-      if puede_capturar_al_paso?(columna, fila)
-        $tablero[columna][fila + 1] = nil
-      end
-
-      $tablero.captura_al_paso = 0
-    end
-
-    super
-
-    $tablero[columna][fila] = (!$tablero.en_pruebas? and @fila == 1) ? coronar : self
+  def fila_siguiente(fila = @fila)
+    fila.pred
   end
 
-  def puede_desplazarse?(columna, fila)
-    super and ((@fila - 1) == fila or (@fila == 7 and fila == 5 and $tablero[columna][6].nil?))
-  end
-
-  def puede_atacar?(columna, fila)
-    super and (@fila - 1) == fila
-  end
-
-  def puede_capturar_al_paso?(columna, fila)
-    super and @fila == 4 and fila == 3
+  def fila_inicial
+    7
   end
 end

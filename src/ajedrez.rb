@@ -51,7 +51,7 @@ if __FILE__ == $PROGRAM_NAME
 
       when /\Aj(ugador)?\z/.match(instruccion)
         if $tablero.se_puede_jugar?
-          print "Deben mover las #{$tablero.jugador_actual}.\n\n"
+          print "Deben mover las #{$tablero.jugador}.\n\n"
         else
           print "La partida ha terminado. Escriba reiniciar para jugar otra.\n\n"
         end

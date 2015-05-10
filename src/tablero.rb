@@ -1,18 +1,18 @@
 class Tablero < Hash
-  attr_reader :jugador_actual, :historial, :notacion_jugada
-  attr_accessor :captura_al_paso, :en_pruebas
+  attr_reader :jugador, :historial, :notacion
+  attr_accessor :captura_al_paso, :test
 
   def initialize
     @historial = Historial.new
-    @jugador_actual = BLANCAS
+    @jugador = BLANCAS
     @captura_al_paso = 0
-    @en_pruebas = false
+    @test = false
 
-    self.limpiar  
+    self.limpiar
   end
 
-  def en_pruebas?
-    @en_pruebas
+  def test?
+    @test
   end
 
   def deep_clone
@@ -65,7 +65,7 @@ class Tablero < Hash
 
   def mostrar
     print "\n  a b c d e f g h\n"
-    
+
     8.downto(1) do |fila|
       print "#{fila} "
       (1..8).each do |columna|
@@ -86,7 +86,7 @@ class Tablero < Hash
   end
 
   def mover(columna_anterior, fila_anterior, columna_siguiente, fila_siguiente)
-    if !se_puede_jugar?
+    unless se_puede_jugar?
       print "La partida ha terminado. Escriba reiniciar para jugar otra.\n\n"
       return
     end
@@ -101,7 +101,7 @@ class Tablero < Hash
       return
     end
 
-    if self[columna_anterior][fila_anterior].color != @jugador_actual
+    if self[columna_anterior][fila_anterior].color != @jugador
       print "Movimiento no valido: turno incorrecto.\n\n"
       return
     end
@@ -111,27 +111,27 @@ class Tablero < Hash
       return
     end
 
-    @jugador_actual = jugador_siguiente
-    @notacion_jugada = self[columna_anterior][fila_anterior].notacion_jugada(columna_siguiente, fila_siguiente)
+    @jugador = jugador_siguiente
+    @notacion = self[columna_anterior][fila_anterior].notacion(columna_siguiente, fila_siguiente)
     self[columna_anterior][fila_anterior].mover(columna_siguiente, fila_siguiente)
 
     self.mostrar
-    if jugador_en_jaque_mate?
+    if jaque_mate?
       print "Jaque mate, ganaron las #{jugador_siguiente}.\n\n"
-      @notacion_jugada << "++"
-    elsif jugador_en_ahogado?
-      print "No existe una jugadas posible para las #{@jugador_actual}, la partida termina en tablas.\n\n"
-    elsif !existen_suficientes_piezas?
+      @notacion << "++"
+    elsif ahogado?
+      print "No existe una jugadas posible para las #{@jugador}, la partida termina en tablas.\n\n"
+    elsif !suficientes_piezas?
       print "No existen suficientes piezas para generar un jaque mate, la partida termina en tablas.\n\n"
-    elsif jugador_en_jaque?
-      @notacion_jugada << "+"
+    elsif jaque?
+      @notacion << "+"
     end
-    @historial << @notacion_jugada
+    @historial << @notacion
 
-    @notacion_jugada
+    @notacion
   end
 
-  def existen_suficientes_piezas?
+  def suficientes_piezas?
     values.any? do |columna_hash|
       columna_hash.values.compact.any? do |pieza|
         !pieza.rey?
@@ -139,7 +139,7 @@ class Tablero < Hash
     end
   end
 
-  def puede_ser_atacado?(columna, fila, jugador = @jugador_actual)
+  def puede_ser_atacado?(columna, fila, jugador = @jugador)
     values.any? do |columna_hash|
       columna_hash.values.compact.any? do |pieza|
         pieza.color != jugador and pieza.puede_atacar?(columna, fila)
@@ -147,7 +147,7 @@ class Tablero < Hash
     end
   end
 
-  def piezas_que_pueden_moverse_a(columna, fila)
+  def movibles_a(columna, fila)
     values.flat_map do |columna_hash|
       columna_hash.values.compact.select do |pieza|
         pieza.puede_moverse?(columna, fila)
@@ -155,7 +155,7 @@ class Tablero < Hash
     end
   end
 
-  def existe_jugada_posible?(jugador = @jugador_actual)
+  def existe_jugada_posible?(jugador = @jugador)
     values.any? do |columna_hash|
       columna_hash.values.compact.any? do |pieza|
         pieza.color == jugador and pieza.existe_jugada_posible?
@@ -163,23 +163,23 @@ class Tablero < Hash
     end
   end
 
-  def jugador_en_jaque?(jugador = @jugador_actual)
+  def jaque?(jugador = @jugador)
     values.any? do |columna_hash|
       columna_hash.values.compact.any? do |pieza|
-        pieza.rey?(jugador) and pieza.en_jaque?
+        pieza.rey?(jugador) and pieza.jaque?
       end
     end
   end
 
-  def jugador_en_jaque_mate?(jugador = @jugador_actual)
-    !existe_jugada_posible?(jugador) and jugador_en_jaque?(jugador)
+  def jaque_mate?(jugador = @jugador)
+    !existe_jugada_posible?(jugador) and jaque?(jugador)
   end
 
-  def jugador_en_ahogado?(jugador = @jugador_actual)
-    !existe_jugada_posible?(jugador) and !jugador_en_jaque?(jugador)
+  def ahogado?(jugador = @jugador)
+    !existe_jugada_posible?(jugador) and !jaque?(jugador)
   end
 
-  def jugador_siguiente(jugador = @jugador_actual)
+  def jugador_siguiente(jugador = @jugador)
     jugador == BLANCAS ? NEGRAS : BLANCAS
   end
 
@@ -188,6 +188,6 @@ class Tablero < Hash
   end
 
   def se_puede_jugar?
-    !jugador_en_jaque_mate? and !jugador_en_ahogado? and existen_suficientes_piezas?
+    !jaque_mate? and !ahogado? and suficientes_piezas?
   end
 end
