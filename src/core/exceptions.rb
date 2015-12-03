@@ -1,0 +1,2 @@
+class MovimientoInvalido < Exception
+end

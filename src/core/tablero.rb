@@ -19,10 +19,6 @@ class Tablero < Hash
     Marshal.load(Marshal.dump(self))
   end
 
-  def iniciar
-    colocar_piezas.mostrar
-  end
-
   def colocar_piezas
     self.limpiar
 
@@ -63,72 +59,39 @@ class Tablero < Hash
     self
   end
 
-  def mostrar
-    print "\n  a b c d e f g h\n"
-
-    8.downto(1) do |fila|
-      print "#{fila} "
-      (1..8).each do |columna|
-        if self[columna][fila].nil?
-          print "-".cyan_on_red
-        else
-          print "#{self[columna][fila]}"
-        end
-
-        print " ".on_red if columna != 8
-      end
-
-      print "\n"
-    end
-    print "\n"
-
-    self
-  end
-
   def mover(columna_anterior, fila_anterior, columna_siguiente, fila_siguiente)
     unless se_puede_jugar?
-      print "La partida ha terminado. Escriba reiniciar para jugar otra.\n\n"
-      return
+      raise MovimientoInvalido, "Movimiento no valido: la partida ha terminado."
     end
 
     if [columna_anterior, fila_anterior, columna_siguiente, fila_siguiente].any? { |limite| !(1..8).include?(limite) }
-      print "Movimiento no valido: coordenadas fuera de los limites.\n\n"
-      return
+      raise MovimientoInvalido, "Movimiento no valido: coordenadas fuera de los limites."
     end
 
     if self[columna_anterior][fila_anterior].nil?
-      print "Movimiento no valido: pieza inexistente.\n\n"
-      return
+      raise MovimientoInvalido, "Movimiento no valido: pieza inexistente."
     end
 
     if self[columna_anterior][fila_anterior].color != @jugador
-      print "Movimiento no valido: turno incorrecto.\n\n"
-      return
+      raise MovimientoInvalido, "Movimiento no valido: turno incorrecto."
     end
 
     unless self[columna_anterior][fila_anterior].puede_moverse?(columna_siguiente, fila_siguiente)
-      print "Movimiento no valido.\n\n"
-      return
+      raise MovimientoInvalido, "Movimiento no valido."
     end
 
     @jugador = jugador_siguiente
     @notacion = self[columna_anterior][fila_anterior].notacion(columna_siguiente, fila_siguiente)
     self[columna_anterior][fila_anterior].mover(columna_siguiente, fila_siguiente)
 
-    self.mostrar
     if jaque_mate?
-      print "Jaque mate, ganaron las #{jugador_siguiente}.\n\n"
       @notacion << "++"
-    elsif ahogado?
-      print "No existe una jugadas posible para las #{@jugador}, la partida termina en tablas.\n\n"
-    elsif !suficientes_piezas?
-      print "No existen suficientes piezas para generar un jaque mate, la partida termina en tablas.\n\n"
-    elsif jaque?
+    elsif !ahogado? and suficientes_piezas? and jaque?
       @notacion << "+"
     end
     @historial << @notacion
 
-    @notacion
+    self
   end
 
   def suficientes_piezas?

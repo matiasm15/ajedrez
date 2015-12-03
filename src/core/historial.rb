@@ -1,0 +1,2 @@
+class Historial < Array
+end

@@ -62,10 +62,6 @@ class Pieza
     self.class.to_s.chr
   end
 
-  def to_s
-    (@color == BLANCAS) ? inicial.white_on_red : inicial.black_on_red
-  end
-
   def notacion(columna, fila)
     ambiguedades = $tablero.movibles_a(columna, fila).select do |pieza|
       (@columna != pieza.columna or @fila != pieza.fila) and @color == pieza.color and self.class == pieza.class
@@ -257,27 +253,6 @@ class Peon < Pieza
     $tablero[columna][fila] = (!$tablero.test? and @fila == fila_final) ? coronar : self
   end
 
-  def coronar
-    loop do
-      print "Que pieza quiere (D/A/C/T)? "
-      eleccion = gets.strip
-      case eleccion
-        when "D"
-          return Dama.new(@color, @columna, @fila)
-        when "A"
-          return Alfil.new(@color, @columna, @fila)
-        when "C"
-          return Caballo.new(@color, @columna, @fila)
-        when "T"
-          return Torre.new(@color, @columna, @fila)
-        else
-          puts "Pieza incorrecta."
-      end
-    end
-  ensure
-    $tablero.notacion << "#{eleccion}="
-  end
-
   def puede_moverse?(columna, fila)
     puede_desplazarse?(columna, fila) or puede_atacar?(columna, fila) or puede_capturar_al_paso?(columna, fila) and !jaque?(columna, fila)
   end
@@ -305,6 +280,26 @@ class Peon < Pieza
 
   def fila_final
     fila_avanzada(fila_inicial, 6)
+  end
+
+  private
+  def __coronar__(inicial)
+    case inicial
+      when "D"
+        $tablero.notacion << "=D"
+        Dama.new(@color, @columna, @fila)
+      when "A"
+        $tablero.notacion << "=A"
+        Alfil.new(@color, @columna, @fila)
+      when "C"
+        $tablero.notacion << "=C"
+        Caballo.new(@color, @columna, @fila)
+      when "T"
+        $tablero.notacion << "=T"
+        Torre.new(@color, @columna, @fila)
+      else
+        raise ArgumentError
+    end
   end
 end
 
