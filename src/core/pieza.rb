@@ -85,7 +85,7 @@ class Pieza
     @columna = columna
     @fila = fila
     @se_movio = true
-    $tablero.captura_al_paso = 0
+    $tablero.captura_al_paso = nil
     $tablero[@columna][@fila] = self
   end
 
@@ -127,15 +127,15 @@ class Pieza
     puede_desplazarse?(columna, fila)
   end
 
-  def puede_enrocar?(_rey = nil)
+  def puede_enrocar?(rey = nil)
     false
   end
 
-  def rey?(_color = @color)
+  def rey?(color = @color)
     false
   end
 
-  def torre?(_color = @color)
+  def torre?(color = @color)
     false
   end
 end
@@ -244,7 +244,7 @@ class Peon < Pieza
       $tablero.captura_al_paso = columna
     else
       $tablero[columna][@fila] = nil if puede_capturar_al_paso?(columna, fila)
-      $tablero.captura_al_paso = 0
+      $tablero.captura_al_paso = nil
     end
 
     $tablero[@columna][@fila] = nil
@@ -298,7 +298,7 @@ class Peon < Pieza
         $tablero.notacion << "=T"
         Torre.new(@color, @columna, @fila)
       else
-        raise ArgumentError
+        raise ArgumentError, "el argumento no se corresponde con ningun tipo de pieza"
     end
   end
 end

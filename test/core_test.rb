@@ -39,7 +39,13 @@ class TestAjedrez < Minitest::Test
     $tablero.mover(4, 8, 8, 4)                        # d8 a h4
 
     assert $tablero.jaque_mate?
-    assert_equal $tablero.notacion, "Dh4++"
+
+    assert_equal $tablero.historial, [
+      "f3",
+      "e5",
+      "g4",
+      "Dh4++"
+    ]
   end
 
   # Defensa Patrov
@@ -58,7 +64,19 @@ class TestAjedrez < Minitest::Test
     $tablero.mover(4, 7, 4, 5)                        # d7 a d5
     $tablero.mover(5, 5, 4, 6)                        # e5 a d6
 
-    assert_equal $tablero.notacion, "exd6e.p."
+    assert_equal $tablero.historial, [
+      "e4",
+      "e5",
+      "Cf3",
+      "Cf6",
+      "d4",
+      "exd4",
+      "e5",
+      "Ce4",
+      "Dxd4",
+      "d5",
+      "exd6e.p."
+    ]
   end
 
   def test_movimiento_ambiguo_1
@@ -114,10 +132,6 @@ class TestAjedrez < Minitest::Test
   end
 
   def test_enrroque
-    Peon.send(:define_method, :coronar) do            # Implemento el método coronar de Peon.
-      __coronar__("T")
-    end
-
     Torre.new(BLANCAS, 1, 1)
     Caballo.new(BLANCAS, 2, 1)
     Dama.new(BLANCAS, 6, 3)
@@ -170,6 +184,10 @@ class TestAjedrez < Minitest::Test
   end
 
   def test_coronacion
+    Peon.send(:define_method, :coronar) do            # Implemento el método coronar de Peon.
+      __coronar__("T")
+    end
+
     Rey.new(BLANCAS, 2, 1)
     Rey.new(NEGRAS, 7, 8)
     Alfil.new(NEGRAS, 1, 4)
@@ -179,7 +197,7 @@ class TestAjedrez < Minitest::Test
     PeonNegro.new(7, 7)
     PeonNegro.new(8, 7)
 
-    $tablero.mover(3, 7, 2, 8)                        # e8 a b8 (peón corona a dama)
+    $tablero.mover(3, 7, 2, 8)                        # e8 a b8 (peón corona a torre)
 
     assert $tablero[2][8].torre?(BLANCAS)
     assert_equal $tablero.notacion, "cxb8=T+"

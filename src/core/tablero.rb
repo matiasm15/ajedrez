@@ -1,13 +1,13 @@
 class Tablero < Hash
-  attr_reader :jugador, :historial, :notacion
-  attr_accessor :captura_al_paso, :test
+  attr_accessor :jugador, :historial, :notacion, :captura_al_paso, :test
 
   def initialize
     @historial = Historial.new
     @jugador = BLANCAS
-    @captura_al_paso = 0
+    @captura_al_paso = nil
     @test = false
 
+    self.default_proc = Proc.new { raise KeyError, "coordenadas fuera de los limites del tablero" }
     self.limpiar
   end
 
@@ -16,7 +16,16 @@ class Tablero < Hash
   end
 
   def deep_clone
-    Marshal.load(Marshal.dump(self))
+    self.clone.tap do |tablero|
+      tablero.historial = nil
+
+      (1..8).each do |columna|
+        tablero[columna] = self[columna].clone
+        (1..8).each do |fila|
+          tablero[columna][fila] = self[columna][fila].clone unless tablero[columna][fila].nil?
+        end
+      end
+    end
   end
 
   def colocar_piezas
@@ -49,7 +58,7 @@ class Tablero < Hash
 
   def limpiar
     (1..8).each do |columna|
-      self[columna] = {}
+      self[columna] = Hash.new { raise KeyError, "coordenadas fuera de los limites del tablero" }
 
       (1..8).each do |fila|
         self[columna][fila] = nil
@@ -61,23 +70,19 @@ class Tablero < Hash
 
   def mover(columna_anterior, fila_anterior, columna_siguiente, fila_siguiente)
     unless se_puede_jugar?
-      raise MovimientoInvalido, "Movimiento no valido: la partida ha terminado."
-    end
-
-    if [columna_anterior, fila_anterior, columna_siguiente, fila_siguiente].any? { |limite| !(1..8).include?(limite) }
-      raise MovimientoInvalido, "Movimiento no valido: coordenadas fuera de los limites."
+      raise MovimientoInvalido, "la partida ha terminado"
     end
 
     if self[columna_anterior][fila_anterior].nil?
-      raise MovimientoInvalido, "Movimiento no valido: pieza inexistente."
+      raise MovimientoInvalido, "pieza inexistente"
     end
 
     if self[columna_anterior][fila_anterior].color != @jugador
-      raise MovimientoInvalido, "Movimiento no valido: turno incorrecto."
+      raise MovimientoInvalido, "turno incorrecto"
     end
 
     unless self[columna_anterior][fila_anterior].puede_moverse?(columna_siguiente, fila_siguiente)
-      raise MovimientoInvalido, "Movimiento no valido."
+      raise MovimientoInvalido, "la pieza no puede moverse a la posicion indicada"
     end
 
     @jugador = jugador_siguiente

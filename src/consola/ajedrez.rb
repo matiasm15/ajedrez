@@ -42,7 +42,7 @@ class Game
           if $tablero.se_puede_jugar?
             begin
               $tablero.mover(match_data[2].to_num, match_data[3].to_i, match_data[4].to_num, match_data[5].to_i).mostrar
-              
+
               if $tablero.jaque_mate?
                 print "Jaque mate, ganaron las #{$tablero.jugador_siguiente}.\n\n"
               elsif $tablero.ahogado?
@@ -51,7 +51,7 @@ class Game
                 print "No existen suficientes piezas para generar un jaque mate, la partida termina en tablas.\n\n"
               end
             rescue MovimientoInvalido
-              print $!
+              print "Movimiento no valido: " + $! + "."
               print "\n\n"
             end
           else
