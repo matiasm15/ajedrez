@@ -22,7 +22,7 @@ class Tablero < Hash
 
         color = if columna == columna_focus and fila == fila_focus
                   Color::BLUE
-                else 
+                else
                   (columna + fila).even? ? Color::WHITE : Color::RED
                 end
 
@@ -40,6 +40,7 @@ class Tablero < Hash
         y_2 = @height * fila + @y
 
         window.draw_quad(x_1, y_1, Color::CYAN, x_2, y_1, Color::CYAN, x_2, y_2, Color::CYAN, x_1, y_2, Color::CYAN)
+
         window.draw_pieza(self[columna][fila], x_1, y_1) if !self[columna][fila].nil?
       end
     end

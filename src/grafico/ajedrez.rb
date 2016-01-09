@@ -1,6 +1,5 @@
 require 'colored'
 require 'gosu'
-require 'set'
 require_relative '../core/ajedrez'
 require_relative 'tablero'
 include Gosu
@@ -13,40 +12,40 @@ class Game < Window
     $tablero = Tablero.crear(60, 60, 60, 60)
     $tablero.colocar_piezas
 
-    @pieza_columna = 0
-    @pieza_fila = 0
-    @activo = false
     @dibujar = true
-    @set_posiciones = (1..8).to_a.repeated_permutation(2).to_set
+
+    @pieza_activa = false
+    @pieza_fila = nil
+    @pieza_columna = nil
   end
 
   def draw_pieza(pieza, x, y)
     @pict_piezas ||= {
       Rey => {
-          BLANCAS => Image.load_tiles("chess.png", 333, 333).at(0),
-          NEGRAS => Image.load_tiles("chess.png", 333, 333).at(6)
+          BLANCAS => Image.load_tiles("./graphics/chess.png", 333, 333).at(0),
+          NEGRAS => Image.load_tiles("./graphics/chess.png", 333, 333).at(6)
         },
       Dama => {
-          BLANCAS => Image.load_tiles("chess.png", 333, 333).at(1),
-          NEGRAS => Image.load_tiles("chess.png", 333, 333).at(7)
+          BLANCAS => Image.load_tiles("./graphics/chess.png", 333, 333).at(1),
+          NEGRAS => Image.load_tiles("./graphics/chess.png", 333, 333).at(7)
         },
       Alfil => {
-          BLANCAS => Image.load_tiles("chess.png", 333, 333).at(2),
-          NEGRAS => Image.load_tiles("chess.png", 333, 333).at(8)
+          BLANCAS => Image.load_tiles("./graphics/chess.png", 333, 333).at(2),
+          NEGRAS => Image.load_tiles("./graphics/chess.png", 333, 333).at(8)
         },
       Caballo => {
-          BLANCAS => Image.load_tiles("chess.png", 333, 333).at(3),
-          NEGRAS => Image.load_tiles("chess.png", 333, 333).at(9)
+          BLANCAS => Image.load_tiles("./graphics/chess.png", 333, 333).at(3),
+          NEGRAS => Image.load_tiles("./graphics/chess.png", 333, 333).at(9)
         },
       Torre => {
-          BLANCAS => Image.load_tiles("chess.png", 333, 333).at(4),
-          NEGRAS => Image.load_tiles("chess.png", 333, 333).at(10)
+          BLANCAS => Image.load_tiles("./graphics/chess.png", 333, 333).at(4),
+          NEGRAS => Image.load_tiles("./graphics/chess.png", 333, 333).at(10)
         },
       PeonBlanco => {
-          BLANCAS => Image.load_tiles("chess.png", 333, 333).at(5)
+          BLANCAS => Image.load_tiles("./graphics/chess.png", 333, 333).at(5)
         },
       PeonNegro => {
-          NEGRAS => Image.load_tiles("chess.png", 333, 333).at(11)
+          NEGRAS => Image.load_tiles("./graphics/chess.png", 333, 333).at(11)
         }
     }
 
@@ -59,39 +58,34 @@ class Game < Window
     $tablero.draw(self, @pieza_columna, @pieza_fila)
   end
 
-  def update
-    if button_down?(Gosu::MsLeft)
-      pieza_fila = mouse_y.fdiv(60).truncate
-      pieza_columna = mouse_x.fdiv(60).truncate
+  def button_up(button)
+    if button.eql?(Gosu::MsLeft)
+      @dibujar = true
 
-      if [pieza_fila, pieza_columna].any? { |limite| !(1..8).include?(limite) }
-        puts "[Error] Posicion (#{pieza_columna},#{pieza_fila}) no valida."
+      pieza_fila = mouse_y.div(60)
+      pieza_columna = mouse_x.div(60)
 
-        @pieza_fila = 0
-        @pieza_columna = 0
-        @activo = false
-      elsif @activo and $tablero[@pieza_columna][@pieza_fila].puede_moverse?(pieza_columna, pieza_fila)
-        puts "Pieza movida (#{@pieza_columna},#{@pieza_fila}) a (#{pieza_columna},#{pieza_fila})."
+      begin
+        if @pieza_activa and $tablero[@pieza_columna][@pieza_fila].puede_moverse?(pieza_columna, pieza_fila)
+          $tablero.mover(@pieza_columna, @pieza_fila, pieza_columna, pieza_fila)
+        elsif !$tablero[pieza_columna][pieza_fila].nil? and $tablero[pieza_columna][pieza_fila].color.eql?($tablero.jugador)
 
-        $tablero.mover(@pieza_columna, @pieza_fila, pieza_columna, pieza_fila)
-        @pieza_fila = 0
-        @pieza_columna = 0
-        @activo = false
-      elsif !$tablero[pieza_columna][pieza_fila].nil? and $tablero[pieza_columna][pieza_fila].color == $tablero.jugador
-        puts "Seleccionada pieza (#{pieza_columna},#{pieza_fila})."
+          # Le doy el focus a la nueva posicion en caso que no lo tenga. Si ya lo tuviera lo pierde.
+          if !@pieza_columna.eql?(pieza_columna) or !@pieza_fila.eql?(pieza_fila)
+            @pieza_activa = true
+            @pieza_fila = pieza_fila
+            @pieza_columna = pieza_columna
 
-        @pieza_fila = pieza_fila
-        @pieza_columna = pieza_columna
-        @activo = true
-      else
-        puts "[Error] Posicion (#{pieza_columna},#{pieza_fila}) no valida para pieza (#{@pieza_columna},#{@pieza_fila})."
+            return
+          end
 
-        @pieza_fila = 0
-        @pieza_columna = 0
-        @activo = false
+        end
+      rescue Exception
       end
 
-      @dibujar = true
+      @pieza_activa = false
+      @pieza_fila = nil
+      @pieza_columna = nil
     end
   end
 
