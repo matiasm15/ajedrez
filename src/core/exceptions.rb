@@ -1,2 +1,0 @@
-class MovimientoInvalido < Exception
-end
