@@ -1,0 +1,5 @@
+task :default => :play
+
+task :play do
+  require_relative './src/ajedrez'
+end
