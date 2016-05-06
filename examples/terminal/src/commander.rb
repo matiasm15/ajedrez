@@ -46,14 +46,16 @@ class Commander
   end
 
   def ayuda
-    puts "(m)over <pos_ini> <pos_fin>:  mueve una pieza del tablero dada una posicion inicial y otra final."
-    puts "(h)istorial:                  muestra el historial de la partida."
-    puts "(t)ablero:                    muestra el tablero."
-    puts "(r)einiciar:                  reinicia la partida."
-    puts "(j)ugador:                    muestra el jugador que tiene el turno para mover."
-    puts "(a)yuda:                      muestra esta ayuda."
-    puts "(s)alir:                      sale del juego."
-    print "\n"
+    puts <<~HEREDOC
+      (m)over <pos_ini> <pos_fin>:  mueve una pieza del tablero dada una posicion inicial y otra final.
+      (h)istorial:                  muestra el historial de la partida.
+      (t)ablero:                    muestra el tablero.
+      (r)einiciar:                  reinicia la partida.
+      (j)ugador:                    muestra el jugador que tiene el turno para mover.
+      (a)yuda:                      muestra esta ayuda.
+      (s)alir:                      sale del juego.
+
+    HEREDOC
   end
 
   def mover(tablero, posiciones)

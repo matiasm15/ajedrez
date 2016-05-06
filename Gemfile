@@ -1,6 +1,9 @@
 source 'https://rubygems.org'
 
-gem 'gosu'
+ruby '2.3.0'
+
+gem 'gosu', '>= 0.10.7'
 gem 'colored'
-gem 'minitest'
-gem 'minitest-reporters'
+gem 'simplecov', :group => :development
+gem 'minitest', :group => :development
+gem 'minitest-reporters', :group => :development

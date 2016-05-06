@@ -53,7 +53,7 @@ class ScreenTablero
   def draw(tablero, focus)
     (1..8).each do |columna|
       (1..8).each do |fila|
-        if focus and focus.eql?(tablero[columna][fila])
+        if focus&.eql?(tablero[columna][fila])
           color = Color::BLUE
         else
           color = (columna + fila).even? ? Color::WHITE : Color::RED

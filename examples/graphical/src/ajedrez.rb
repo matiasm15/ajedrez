@@ -53,14 +53,14 @@ class Game < Window
       columna, fila = @screen_tablero.casilla(mouse_x, mouse_y)
 
       begin
-        if @focus and @focus.puede_moverse?(columna, fila)
+        if @focus&.puede_moverse?(columna, fila)
           @mover = Thread.new do
             @tablero.mover(@focus.columna, @focus.fila, columna, fila)
             @needs_redraw = true
           end
 
           @mover.join(0.05) until @mover.stop?
-        elsif @tablero[columna][fila] and @tablero[columna][fila].color.eql?(@tablero.jugador)
+        elsif @tablero[columna][fila]&.color.eql?(@tablero.jugador)
           # Le doy el focus a la nueva posicion en caso que no lo tenga. Si ya lo tuviera lo pierde.
           unless @focus.eql?(@tablero[columna][fila])
             @focus = @tablero[columna][fila]

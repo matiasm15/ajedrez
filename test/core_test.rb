@@ -1,3 +1,6 @@
+require 'simplecov'
+SimpleCov.start
+
 require 'minitest/reporters'
 require 'minitest/autorun'
 Minitest::Reporters.use!(Minitest::Reporters::SpecReporter.new)
@@ -66,7 +69,7 @@ class TestAjedrez < Minitest::Test
     @tablero.mover(4, 7, 4, 5)                        # d7 a d5
     @tablero.mover(5, 5, 4, 6)                        # e5 a d6
 
-    assert_equal @tablero[4][5], nil
+    assert_nil @tablero[4][5]
 
     assert_equal @tablero.historial, [
       "e4",

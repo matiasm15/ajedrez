@@ -30,6 +30,7 @@ module Ajedrez
       @historial = Array.new
       @jugador = Blancas
       @test = false
+      @notacion = ""
 
       self.default_proc = proc { raise KeyError, "coordenadas fuera de los limites del tablero" }
       self.vaciar
@@ -42,20 +43,22 @@ module Ajedrez
     end
 
     ##
-    # Devuelve una copia del tablero (sin el historial) y sus piezas, preparado para hacer pruebas de posibles
-    # movimientos.
+    # Devuelve una copia profunda del tablero y sus piezas.
     def deep_clone
-      Tablero.new.tap do |nuevo_tablero|
-        nuevo_tablero.test = true
-        nuevo_tablero.jugador = @jugador
-        nuevo_tablero.captura_al_paso = @captura_al_paso
+      Tablero.new.tap do |tablero_clon|
+        tablero_clon.test = true
+        tablero_clon.jugador = @jugador
+        tablero_clon.captura_al_paso = @captura_al_paso
+        tablero_clon.notacion = @notacion.clone
 
-        nuevo_tablero.notacion = @notacion.clone if @notacion
+        @historial.each do |movimiento|
+          tablero_clon.historial << movimiento.clone
+        end
 
         piezas.each do |pieza|
-          nueva_pieza = pieza.clone
-          nueva_pieza.tablero = nuevo_tablero
-          nuevo_tablero[pieza.columna][pieza.fila] = nueva_pieza
+          pieza_clon = pieza.clone
+          pieza_clon.tablero = tablero_clon
+          tablero_clon[pieza.columna][pieza.fila] = pieza_clon
         end
       end
     end
